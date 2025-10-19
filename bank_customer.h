@@ -1,32 +1,37 @@
-#ifndef BANK_CUSTOMER_H
-#define BANK_CUSTOMER_H
+#ifndef BUYER_H
+#define BUYER_H
 
+#include <cstddef>
 #include <string>
+#include <vector>
+#include "bank_customer.h" 
+#include "order.h" 
 
 using namespace std;
 
-class BankCustomer {
+class Buyer {
 private:
     int id;
     string name;
-    double balance;
+    BankCustomer &account; 
+    vector<Order> orders; 
 
 public:
-    BankCustomer(int id, const string& name, double balance) : id(id), name(name), balance(balance) {
-        this->id = id;
-        this->name = name;
-        this->balance = balance;
+    Buyer(int id, const string& name, BankCustomer &account0)
+        : id(id), name(name), account(account0) {}
+
+    int getId() const { return id; }
+    string getName() const { return name; }
+    BankCustomer& getAccount() { return account; } 
+    vector<Order>& getOrders() { return orders; } 
+
+    void setId(int newId) { id = newId; }
+    void setName(const std::string& newName) { name = newName; }
+
+    void printInfo() const {
+        std::cout << "Buyer Name: " << name << std::endl;
+        std::cout << "Buyer ID: " << id << std::endl;
     }
-
-    int getId() const;
-    string getName() const;
-    double getBalance() const;
-
-    void printInfo() const;
-    void setName(const string& name);
-    void setBalance(double balance);
-    void addBalance(double amout);
-    bool withdrawBalance(double amout);
 };
 
-#endif // BANK_CUSTOMER_H
+#endif // BUYER_H
