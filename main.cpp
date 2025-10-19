@@ -3,6 +3,7 @@
 #include <string>
 #include <limits>
 #include <algorithm>
+#include <stdexcept>
 #include "bank_customer.h"
 #include "buyer.h"
 #include "seller.h"
@@ -12,12 +13,15 @@ using namespace std;
 
 enum PrimaryPrompt { LOGIN, REGISTER, EXIT };
 
-Bank myBank("Main Bank");
+Bank myBank("Global Commerce Bank");
+
 vector<Buyer> buyers;
 vector<seller> sellers;
-int buyerIdCounter = 0;
-bool isLoggedIn = false;
 
+int buyerIdCounter = 0;
+int itemIdCounter = 0;
+
+bool isLoggedIn = false;
 Buyer* currentBuyer = nullptr;
 seller* currentSeller = nullptr;
 
@@ -29,17 +33,34 @@ void bankingFunctions(BankCustomer& account);
 void upgradeToSeller();
 seller* findSeller(int buyerId);
 Buyer* findBuyer(int buyerId);
+void checkInventory();
+void addItemToInventory();
 
 int main() {
-    BankCustomer& aliceAcc = myBank.createAccount("Alice", 2000.0);
-    buyers.emplace_back(++buyerIdCounter, "Alice", aliceAcc); 
-    sellers.emplace_back(buyers.back(), buyers.back().getId(), "Alice's Store");
+    try {
+        BankCustomer& aliceAcc = myBank.createAccount("Alice", 2000.0, "Jl. Utama", "08123", "alice@test.com");
+
+        buyers.emplace_back(++buyerIdCounter, "Alice", aliceAcc); 
+        Buyer& aliceBuyer = buyers.back();
+
+        sellers.emplace_back(aliceBuyer, aliceBuyer.getId(), "Alice's Marketplace");
+
+        BankCustomer& bobAcc = myBank.createAccount("Bob", 500.0, "Jl. Kedua", "08987", "bob@test.com");
+        buyers.emplace_back(++buyerIdCounter, "Bob", bobAcc);
+
+        itemIdCounter++; 
+        sellers.front().addNewItem(itemIdCounter, "Laptop Gaming", 5, 1200.0);
+        sellers.front().makeItemVisibleToCustomer(itemIdCounter);
+
+    } catch (const exception& e) {
+        cerr << "Initialization Error: " << e.what() << endl;
+    }
 
 
     PrimaryPrompt prompt = LOGIN;
     while (prompt != EXIT) {
         cout << "\n===================================" << endl;
-        cout << "Select an option: " << endl;
+        cout << "MAIN MENU" << endl;
         cout << "1. Login" << endl;
         cout << "2. Register" << endl;
         cout << "3. Exit" << endl;
@@ -67,7 +88,7 @@ int main() {
                 handleRegister();
                 break;
             case EXIT:
-                cout << "Exiting." << std::endl;
+                cout << "Exiting program." << std::endl;
                 break;
         }
     }
@@ -84,7 +105,7 @@ Buyer* findBuyer(int id) {
 
 seller* findSeller(int buyerId) {
     for (auto& s : sellers) {
-        if (s.getId() == buyerId) return &s;
+        if (s.getId() == buyerId) return &s; 
     }
     return nullptr;
 }
@@ -105,7 +126,7 @@ void handleRegister() {
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
-
+    
     try {
         BankCustomer& newAcc = myBank.createAccount(name, initialDeposit, address, phone, email);
 
@@ -127,11 +148,11 @@ void handleRegister() {
         currentBuyer = &newBuyer;
         currentSeller = findSeller(newBuyer.getId());
         cout << "\nRegistration complete. Logged in as " << currentBuyer->getName() << ".\n";
-
-        buyerMenu(); 
+        
+        buyerMenu();
         
     } catch (const exception& e) {
-        cout << "Registration Failed: " << e.what() << endl;
+        cerr << "Registration Failed: " << e.what() << endl;
     }
 }
 
@@ -150,7 +171,7 @@ void handleLogin() {
 
     if (currentBuyer) {
         currentSeller = findSeller(id);
-        cout << "Login successful. Welcome, " << currentBuyer->getName() << "!\n";
+        cout << "Login successful. Welcome, " << currentBuyer->getName() << " (ID: " << currentBuyer->getId() << ")!\n";
         isLoggedIn = true;
         buyerMenu();
     } else {
@@ -161,21 +182,25 @@ void handleLogin() {
 void buyerMenu() {
     int choice;
     do {
-        cout << "\n--- BUYER MENU (Logged in as: " << currentBuyer->getName() << ") ---" << endl;
         bool isSeller = (currentSeller != nullptr);
-
+        
+        cout << "\n--- BUYER MENU (User: " << currentBuyer->getName() << ") ---" << endl;
         cout << "1. Check Account Status" << endl;
+        
         if (!isSeller) {
             cout << "2. Upgrade Account to Seller" << endl;
         } else {
             cout << "2. Go to Seller Menu" << endl; 
         }
-        cout << (isSeller ? "3" : "2") << ". Banking Functions (Deposit/Withdraw/Balance)" << endl;
-        cout << (isSeller ? "4" : "3") << ". Browse Store Functionality (DUMMY)" << endl;
-        cout << (isSeller ? "5" : "4") << ". Order Functionality (DUMMY)" << endl;
-        cout << (isSeller ? "6" : "5") << ". Payment Functionality (DUMMY)" << endl;
-        cout << (isSeller ? "7" : "6") << ". Logout" << endl;
-        cout << (isSeller ? "8" : "7") << ". Delete Account (DUMMY)" << endl;
+
+        int offset = (isSeller ? 1 : 0);
+        
+        cout << 2 + offset << ". Banking Functions (Deposit/Withdraw/Balance)" << endl;
+        cout << 3 + offset << ". Browse Store Functionality (DUMMY)" << endl;
+        cout << 4 + offset << ". Order Functionality (DUMMY)" << endl;
+        cout << 5 + offset << ". Payment Functionality (DUMMY)" << endl;
+        cout << 6 + offset << ". Logout" << endl;
+        cout << 7 + offset << ". Delete Account (DUMMY)" << endl;
 
         cout << "Pilihan >> ";
         if (!(cin >> choice)) {
@@ -183,49 +208,50 @@ void buyerMenu() {
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             continue;
         }
-
-        int baseOption = isSeller ? 0 : 1; 
-        
-        switch (choice) {
-            case 1:
-                cout << "\n--- ACCOUNT STATUS ---" << endl;
-                currentBuyer->printInfo();
-                cout << "Role: " << (isSeller ? "Buyer & Seller" : "Buyer Only") << endl;
-                cout << "----------------------" << endl;
-                break;
-            case 2:
-                if (isSeller) {
-                    sellerMenu();
-                } else {
-                    upgradeToSeller();
-                    isSeller = (currentSeller != nullptr);
-                }
-                break;
-            case 3 - 1 + baseOption:
-                bankingFunctions(currentBuyer->getAccount());
-                break;
-            case 4 - 1 + baseOption:
-                cout << "--- DUMMY: Browse Store Functionality ---" << endl;
-                break;
-            case 5 - 1 + baseOption:
-                cout << "--- DUMMY: Order Functionality ---" << endl;
-                break;
-            case 6 - 1 + baseOption:
-                cout << "--- DUMMY: Payment Functionality ---" << endl;
-                break;
-            case 7 - 1 + baseOption:
-                cout << "Logging out...\n";
-                currentBuyer = nullptr;
-                currentSeller = nullptr;
-                isLoggedIn = false;
-                return;
-            case 8 - 1 + baseOption:
-                cout << "--- DUMMY: Delete Account Functionality ---" << endl;
-                break;
-            default:
-                cout << "Invalid option." << endl;
-                break;
+        if (choice == 1) {
+            cout << "\n--- ACCOUNT STATUS ---" << endl;
+            try {
+                myBank.printCustomerInfo(currentBuyer->getAccount().getId());
+            } catch (const exception& e) {
+                cerr << "Error fetching bank info: " << e.what() << endl;
+            }
+            cout << "Role: " << (isSeller ? "Buyer & Seller (Store: " + currentSeller->sellerName + ")" : "Buyer Only") << endl;
+            cout << "----------------------" << endl;
         }
+        else if (choice == 2) {
+            if (isSeller) {
+                sellerMenu();
+            } else {
+                upgradeToSeller();
+                currentSeller = findSeller(currentBuyer->getId()); 
+            }
+        } 
+        else if (choice == (2 + offset)) {
+            bankingFunctions(currentBuyer->getAccount());
+        }
+        else if (choice == (3 + offset)) {
+            cout << "--- DUMMY: Browse Store Functionality ---" << endl;
+        }
+        else if (choice == (4 + offset)) {
+            cout << "--- DUMMY: Order Functionality ---" << endl;
+        }
+        else if (choice == (5 + offset)) {
+            cout << "--- DUMMY: Payment Functionality ---" << endl;
+        }
+        else if (choice == (6 + offset)) {
+            cout << "Logging out...\n";
+            currentBuyer = nullptr;
+            currentSeller = nullptr;
+            isLoggedIn = false;
+            return;
+        }
+        else if (choice == (7 + offset)) {
+            cout << "--- DUMMY: Delete Account Functionality ---" << endl;
+        }
+        else {
+             cout << "Invalid option." << endl;
+        }
+
     } while (isLoggedIn);
 }
 
@@ -235,8 +261,8 @@ void sellerMenu() {
     int choice;
     do {
         cout << "\n--- SELLER MENU (Store: " << currentSeller->sellerName << ") ---" << endl;
-        cout << "9. Check Inventory (DUMMY)" << endl;
-        cout << "10. Add Item to Inventory (DUMMY)" << endl;
+        cout << "9. Check Inventory" << endl;
+        cout << "10. Add Item to Inventory" << endl;
         cout << "11. Remove Item from Inventory (DUMMY)" << endl;
         cout << "12. View Orders (DUMMY)" << endl;
         cout << "13. Exit to Buyer Menu" << endl;
@@ -251,13 +277,13 @@ void sellerMenu() {
 
         switch (choice) {
             case 9:
-                cout << "--- DUMMY: Check Inventory ---" << endl;
+                checkInventory(); 
                 break;
             case 10:
-                cout << "--- DUMMY: Add Item ---" << endl;
+                addItemToInventory(); 
                 break;
             case 11:
-                cout << "--- DUMMY: Remove Item ---" << endl;
+                cout << "--- DUMMY: Remove Item from Inventory ---" << endl;
                 break;
             case 12:
                 cout << "--- DUMMY: View Orders ---" << endl;
@@ -268,7 +294,7 @@ void sellerMenu() {
                 currentBuyer = nullptr;
                 currentSeller = nullptr;
                 isLoggedIn = false;
-                return;
+                return; 
             default:
                 cout << "Invalid option." << endl;
                 break;
@@ -335,11 +361,64 @@ void upgradeToSeller() {
         cout << "Enter New Store Name: "; cin.ignore(); getline(cin, storeName);
 
         sellers.emplace_back(*currentBuyer, currentBuyer->getId(), storeName);
-        currentSeller = &sellers.back();
-
+        
         cout << "\n✅ Successfully upgraded " << currentBuyer->getName() 
              << " to Seller! Store Name: " << storeName << ".\n";
     } else {
         cout << "Seller upgrade cancelled.\n";
     }
+}
+
+void checkInventory() {
+    if (!currentSeller) return;
+
+    cout << "\n--- INVENTORY: " << currentSeller->sellerName << " ---" << endl;
+    
+    if (currentSeller->items.empty()) {
+        cout << "Inventory is empty." << endl;
+        return;
+    }
+    
+    cout << "ID | Name | Qty | Price | Displayed" << endl;
+    cout << "---|------|-----|-------|----------" << endl;
+
+    for (const auto& item : currentSeller->items) {
+        cout << item.getId() << " | " 
+             << item.getName() << " | "
+             << item.getQuantity() << " | "
+             << item.getPrice() << " | "
+             << (item.isDisplayed() ? "YES" : "NO") << endl;
+    }
+    cout << "---------------------------------------" << endl;
+}
+
+void addItemToInventory() {
+    if (!currentSeller) return;
+
+    cout << "\n--- ADD NEW ITEM ---" << endl;
+    string name;
+    int quantity;
+    double price;
+
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    cout << "Enter Item Name: "; getline(cin, name);
+    
+    cout << "Enter Quantity: "; 
+    while (!(cin >> quantity) || quantity <= 0) {
+        cout << "Invalid quantity. Enter Quantity: ";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+    cout << "Enter Price: $";
+    while (!(cin >> price) || price <= 0) {
+        cout << "Invalid price. Enter Price: $";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+    
+    currentSeller->addNewItem(++itemIdCounter, name, quantity, price);
+    
+    currentSeller->makeItemVisibleToCustomer(itemIdCounter); 
+
+    cout << "\n✅ Item '" << name << "' added with ID: " << itemIdCounter << endl;
 }
