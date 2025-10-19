@@ -3,13 +3,12 @@ project('my-cpp-project', 'cpp',
     default_options: [
         'cpp_std=c++20',
         'warning_level=3',
-        'werror=true', # Treat all warnings as errors
-        'optimization=s' # Optimize for size
+        'werror=true', 
+        'optimization=s' 
     ]
 )
 
 cpp_args = [
-    # Recommended warnings for g++/clang
     '-Wpedantic',
     '-Wformat=2',
     '-Wundef',
@@ -24,9 +23,10 @@ cpp_args = [
 add_global_arguments(cpp_args, language : 'cpp')
 
 app_sources = [
-'main.cpp',
-'bank_customer.cpp',
-'bank.cpp',
+    'main.cpp',
+    'bank_customer.cpp',
+    'bank.cpp', 
+    'transaction.cpp',
 ]
 
 executable('my_app',
