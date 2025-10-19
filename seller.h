@@ -4,26 +4,22 @@
 #include <string>
 #include <vector>
 
-class seller : public Buyer {
+class seller : public Buyer { 
+
+public: 
+    std::string sellerName;
+    std::vector<Item> items; 
 
 private:
-    // Add seller-specific private members here
-    int sellerId;
-    std::string sellerName;
     bool idDisplayed(int itemId) const {
-        // Example implementation, can be customized
-        return itemId > 0; // Assuming valid IDs are positive integers
+        return itemId > 0; 
     }
-
-    vector<Item> items; // Assuming seller has a collection of items
-
 
 public:
     seller() = default;
 
-    seller(Buyer buyer, int sellerId, const std::string& sellerName)
-        : Buyer(buyer.getId(), buyer.getName(), buyer.getAccount()), sellerId(sellerId), sellerName(sellerName) {
-            Buyer::setId(buyer.getId());
+    seller(const Buyer& buyer, int sellerId, const std::string& sellerName)
+        : Buyer(buyer.getId(), buyer.getName(), buyer.getAccount()), sellerName(sellerName) {
         }
 
     virtual ~seller() = default;
@@ -32,11 +28,39 @@ public:
         Item newItem(newId, newName, newQuantity, newPrice);
         items.push_back(newItem);
     }
+    
+    Item* findItemById(int itemId) {
+        for (auto& item : items) {
+            if (item.getId() == itemId) return &item;
+        }
+        return nullptr;
+    }
+
+    void setItemPrice(int itemId, double newPrice) {
+        if (Item* item = findItemById(itemId)) {
+            item->setPrice(newPrice);
+        }
+    }
+
+    bool replenishItem(int itemId, int amount) {
+        if (Item* item = findItemById(itemId)) {
+            item->replenish(amount);
+            return true;
+        }
+        return false;
+    }
+
+    bool discardItem(int itemId, int amount) {
+        if (Item* item = findItemById(itemId)) {
+            return item->discard(amount);
+        }
+        return false;
+    }
 
     void updateItem(int itemId, const std::string& newName, int newQuantity, double newPrice) {
         for (auto& item : items) {
             if (item.getId() == itemId) {
-                item.alterItemById(itemId, newName, newQuantity, newPrice); // Assuming alterItemById is a method
+                item.alterItemById(itemId, newName, newQuantity, newPrice); 
             }
         }
     }
@@ -44,11 +68,11 @@ public:
     void makeItemVisibleToCustomer(int itemId) {
         for (auto& item : items) {
             if (item.getId() == itemId) {
-                item.setDisplay(true); // Assuming setDisplay is a method in Item class
+                item.setDisplay(true); 
                 break;
             }
         }
     }
 
-    // Add seller-specific members here
+    const std::vector<Item>& getItems() const { return items; }
 };
