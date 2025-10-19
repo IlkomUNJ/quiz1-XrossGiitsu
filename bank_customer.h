@@ -12,10 +12,9 @@ private:
     double balance;
 
 public:
+    BankCustomer() : id(0), name(""), balance(0.0) {}
+    
     BankCustomer(int id, const string& name, double balance) : id(id), name(name), balance(balance) {
-        this->id = id;
-        this->name = name;
-        this->balance = balance;
     }
 
     int getId() const;
