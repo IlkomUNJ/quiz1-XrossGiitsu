@@ -1,6 +1,8 @@
 #include "bank_customer.h"
 #include <iostream>
+#include <iomanip>
 
+using namespace std;
 
 string BankCustomer::getName() const {
     return this->name;
@@ -14,6 +16,10 @@ double BankCustomer::getBalance() const {
     return this->balance;
 }
 
+void BankCustomer::setName(const string& name) {
+    this->name = name;
+}
+
 void BankCustomer::setBalance(double amount) {
     this->balance = amount;
 }
@@ -24,7 +30,6 @@ void BankCustomer::addBalance(double amount) {
 
 bool BankCustomer::withdrawBalance(double amount){
     if (amount > this->balance) {
-        std::cout << "Rejected: Insufficient funds!" << std::endl;
         return false;
     }
     this->balance -= amount;
@@ -34,5 +39,5 @@ bool BankCustomer::withdrawBalance(double amount){
 void BankCustomer::printInfo() const {
     std::cout << "Customer Name: " << this->name << std::endl;
     std::cout << "Customer ID: " << this->id << std::endl;
-    std::cout << "Balance: $" << this->balance << std::endl;
+    std::cout << "Balance: $" << fixed << setprecision(2) << this->balance << std::endl;
 }
