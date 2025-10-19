@@ -2,6 +2,7 @@
 #define ITEM_H
 
 #include <string>
+#include <iostream>
 
 using namespace std;
 
@@ -11,29 +12,38 @@ private:
     std::string name;
     int quantity;
     double price;
-    bool idDisplay;
+    bool idDisplay; 
 
 public:
+    Item() = default;
     Item(int id, const std::string& name, int quantity, double price)
         : id(id), name(name), quantity(quantity), price(price) {
-            idDisplay = false; // Default value for idDisplay
+            idDisplay = false; 
         }
 
-    // Getters
     int getId() const { return id; }
     const std::string& getName() const { return name; }
     int getQuantity() const { return quantity; }
     double getPrice() const { return price; }
-    Item *getItem() {
-        return this; // Returns a pointer to the current item
-    }
+    bool isDisplayed() const { return idDisplay; } 
+    Item *getItem() { return this; }
 
-    // Setters
     void setId(int newId) { id = newId; }
     void setName(const std::string& newName) { name = newName; }
     void setQuantity(int newQuantity) { quantity = newQuantity; }
     void setPrice(double newPrice) { price = newPrice; }
     void setDisplay(bool display) { idDisplay = display; }
+
+    void replenish(int amount) { quantity += amount; }
+    bool discard(int amount) {
+        if (quantity < amount) {
+            return false;
+        }
+        quantity -= amount;
+        return true;
+    }
+    bool checkAvailability(int requestedQty) const { return quantity >= requestedQty; }
+
 
     void alterItemById(int itemId, const std::string& newName, int newQuantity, double newPrice) {
         if (id == itemId) {
