@@ -5,7 +5,6 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <memory>
 
 class Bank {
 private:
@@ -15,6 +14,7 @@ private:
 
 public:
     Bank(const std::string& name);
+
     BankCustomer& createAccount(const std::string& customerName,
                                 double initialDeposit,
                                 const std::string& address = "",
@@ -28,7 +28,10 @@ public:
     bool withdraw(int id, double amount);
 
     void printCustomerInfo(int id);
-    void listAllAccounts() const;
+    
+    void listAllCustomers() const;
+    void listDormantAccounts() const;
+    void listTopUsersToday(int n) const;
 
     int getNextCustomerId() const { return customerCount + 1; }
 };
